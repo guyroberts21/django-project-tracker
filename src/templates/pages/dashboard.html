@@ -43,6 +43,14 @@
                     <td class="px-6 py-4 text-gray-700">{{ project.progress }}%</td>
                     <td class="px-6 py-4 text-gray-700">{{ project.start_date|date:"Y-m-d" }}</td>
                     <td class="px-6 py-4 text-gray-700">{{ project.end_date|date:"Y-m-d" }}</td>
+                    <td class="px-6 py-4 text-center">
+                        <div class="w-6 h-6 mx-auto rounded-full 
+                            {% if project.rag_status == 'Red' %}rag-red
+                            {% elif project.rag_status == 'Amber' %}rag-amber
+                            {% elif project.rag_status == 'Green' %}rag-green
+                            {% else %}rag-gray{% endif %}">
+                        </div>
+                    </td>                    
                 </tr>
                 {% endfor %}
             </tbody>

@@ -1,5 +1,6 @@
-# models.py
 from django.db import models
+from datetime import timedelta
+from django.utils.timezone import now
 from django.utils import timezone
 
 class Project(models.Model):
@@ -9,15 +10,32 @@ class Project(models.Model):
         (3, 'Completed'),
     ]
 
+    RAG_CHOICES = [
+        ('Red', 'Red'),
+        ('Amber', 'Amber'),
+        ('Green', 'Green'),
+    ]
+
     title = models.CharField(max_length=100)
     description = models.TextField(blank=True, null=True)
-    start_date = models.DateTimeField(default=timezone.now)
-    end_date = models.DateTimeField(null=True, blank=True)
+    due_date = models.DateTimeField(default=timezone.now)
     status = models.IntegerField(choices=STATUS_CHOICES, default=1)
     progress = models.DecimalField(max_digits=5, decimal_places=2, default=0.0)  # Percentage progress (0.00 to 100.00)
+    rag_status = models.CharField(max_length=6, choices=RAG_CHOICES, default='Green', editable=True)
 
     def __str__(self):
         return self.title[:50]
+
+    def save(self, *args, **kwargs):
+        # Auto-calculate RAG status based on conditions if not overridden
+        if not self.pk or not self.rag_status:  # Only calculate if not overridden
+            if self.progress < 50 and self.due_date <= now().date() + timedelta(weeks=1):
+                self.rag_status = 'Red'
+            elif self.progress < 80 and self.due_date <= now().date() + timedelta(weeks=1):
+                self.rag_status = 'Amber'
+            else:
+                self.rag_status = 'Green'
+        super().save(*args, **kwargs)
 
     def update_progress(self):
         tasks = self.task_set.all()
