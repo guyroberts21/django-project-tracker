@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4">
+    <h1 class="text-3xl font-bold text-gray-800 my-6">Dashboard</h1>
+
+    <!-- Metrics Section -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-white p-6 shadow rounded-lg">
+            <h2 class="text-lg font-semibold text-gray-700">Total Projects</h2>
+            <p class="text-3xl font-bold text-indigo-500">{{ total_projects }}</p>
+        </div>
+        <div class="bg-white p-6 shadow rounded-lg">
+            <h2 class="text-lg font-semibold text-gray-700">Total Tasks</h2>
+            <p class="text-3xl font-bold text-indigo-500">{{ total_tasks }}</p>
+        </div>
+        <div class="bg-white p-6 shadow rounded-lg">
+            <h2 class="text-lg font-semibold text-gray-700">Completed Tasks</h2>
+            <p class="text-3xl font-bold text-green-500">{{ completed_tasks }}</p>
+        </div>
+        <div class="bg-white p-6 shadow rounded-lg">
+            <h2 class="text-lg font-semibold text-gray-700">Overdue Tasks</h2>
+            <p class="text-3xl font-bold text-red-500">{{ overdue_tasks }}</p>
+        </div>
+    </div>
+
+    <!-- Projects Table -->
+    <div class="mt-8 bg-white shadow rounded-lg">
+        <h2 class="text-2xl font-bold text-gray-800 px-6 py-4 border-b">Projects Overview</h2>
+        <table class="min-w-full table-auto">
+            <thead>
+                <tr class="bg-gray-50">
+                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-600">Title</th>
+                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-600">Progress</th>
+                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-600">Start Date</th>
+                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-600">End Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for project in projects %}
+                <tr class="border-t">
+                    <td class="px-6 py-4 text-gray-700">{{ project.title }}</td>
+                    <td class="px-6 py-4 text-gray-700">{{ project.progress }}%</td>
+                    <td class="px-6 py-4 text-gray-700">{{ project.start_date|date:"Y-m-d" }}</td>
+                    <td class="px-6 py-4 text-gray-700">{{ project.end_date|date:"Y-m-d" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Task Status Chart -->
+    <div class="mt-8 bg-white shadow rounded-lg p-6">
+        <h2 class="text-2xl font-bold text-gray-800">Task Status Distribution</h2>
+        <canvas id="taskStatusChart" class="mt-4"></canvas>
+    </div>
+</div>
+{% endblock %}
