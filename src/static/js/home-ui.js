@@ -1,5 +1,5 @@
 // Get the canvas element
-const ctx = document.getElementById('taskStatusChart').getContext('2d');
+const ctx = document.getElementById('myChart').getContext('2d');
 
 // Create a new chart instance
 const myChart = new Chart(ctx, {
