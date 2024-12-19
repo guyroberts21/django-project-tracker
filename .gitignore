@@ -1,5 +1,6 @@
 .DS_Store
 local-cdn/
+src/static/js/chart.umd.js
 
 # Logs
 logs
