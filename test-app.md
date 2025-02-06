@@ -1,137 +1,146 @@
-## Why do you want to take on the role?
-
-**Structure of answer:**
-1. Why the role of Co-Chair is so important to me, and my passion for improving the experience of early-careers
-2. My thoughts on GAIN leadership, and how it has evolved
-3. My experience and progression as a GAIN Ambassador
-4. Why the timing is right for me, and how this role aligns with my personal development
+Below is a draft document that explains the fix and answers your three questions. You can adjust the wording as needed for your internal documentation.
 
 ---
-`1 - THE FUNDAMENTAL WHY`
 
-I have been contributing as an Ambassador in GAIN since November 2023. I have thoroughly appreciated being part of the community as it has had a profound impact on both my professional and personal life. Before coming to Barclays, I would frequently shy away from opportunities, usually from a lack of self-confidence. It was only through meeting other early-careers, via events and networking opportunities (often provided by GAIN) that I gained the courage to start exploring opportunities. I am therefore incredibly passionate about supporting early-careers because I know how important it is to have such a strong support network. I joined as a Graduate at Barclays in 2023, and it has been a constant learning process, with a steep curve! GAIN provides this network immediately to new joiners, and I think it is greatly appreciated by all early-careers. The huge number of events organised by GAIN ambassadors is impressive, and I hope to continue supporting and highlighting the successes of all ambassadors who contribute.
+# Document: Preparing for the OpenShift 4.13 Upgrade – SSH Configuration Fix
 
-The reason I am interested in the GAIN Co-Chair position is because I believe it would challenge me to explore, strategise, and collaborate with others on ways to further improve the early-career experience as a whole. I also believe that I have the necessary skills and qualities to successfully help lead the organisation.
-
----
-`2 - GAIN LEADERSHIP EVOLUTION`
-
-I have always thought that GAIN has been led exceptionally well, and it has taught me so much about what makes an effective leader. Ellie, Tom - without regard to the application, I really think you've been outstanding in enhancing this community outside of your regular role. I think you have empowered so many Ambassadors to learn skills beyond their usual roles, and encouraged them to take accountability for the direction of their careers.
-
-Since I joined GAIN, there has been a huge amount of growth in the community; growing from around 50 Ambassadors to now having upwards of 150. As an Ambassador in GAIN, I have always felt supported to make useful contributions and that I could explore ideas or potential initiatives within my team. I would love for all GAIN Ambassadors and members to feel this way, and I feel inspired to make this a reality.
+**Purpose:**  
+This document provides a detailed explanation of the required SSH configuration changes when upgrading from OpenShift 4.12 to 4.13+ and outlines the actions, backup/rollback plan, and testing methodology to ensure that the fix works as expected.
 
 ---
-`3 - EXPERIENCE IN GAIN`
 
-I joined the Comms & Governance Workstream and have remained there since becoming an Ambassador. I initially started working alongside Ellie and James (who has now stepped away from GAIN) where I gained a deep understanding of the processes and operations in GAIN. I saw how the whole community "worked" from behind the scenes. From onboarding new Ambassadors, to developing monthly Ambassador newsletters, to evaluating and analysing the engagement and feedback from Ambassadors, I have a strong feel for how GAIN functions, and how we could continue its growth.
+## Background
 
----
-`4 - TIMING AND PERSONAL DEVELOPMENT`
-
-Having recently landed in my final rotation on the Graduate Scheme where I will be staying indefinitely, I now feel that I have the capacity to provide more to the GAIN community. I am someone who always seeks further development and opportunities to enhance my soft skills, particularly since my BAU role is highly technical. In terms of my personal development, I have a strong interest in learning more about how to lead an organisation, developing my communication skills, and in working with some inspirational people to build something extraordinary!
-
----
-## How will you approach and fulfil the duties described by the role?
-
-**Structure of answer:**
-1. What effective leadership means to me
-2. How I would effectively engage with GAIN's key stakeholders
-3. How I would demonstrate good people-leading skills
-4. How I would support ambassadors and maintain their engagement
-5. How I would manage risk and controls with due care
-6. How I would approach the GAIN budget
-7. How I would continuously improve GAIN
-8. How I would drive GAIN's strategy and purpose
+With the introduction of a RHEL 9.2–based RHCOS in OpenShift 4.13, the default SSH key location has changed. Previously, SSH keys were located in:
+```
+/home/core/.ssh/authorized_keys
+```
+Now, they reside in:
+```
+/home/core/.ssh/authorized_keys.d/ignition
+```
+This change means that any customizations made to the SSH server configuration file (`/etc/ssh/sshd_config`) on your nodes must be adjusted. Red Hat’s recommended solution is to include the line:
+```
+Include /etc/ssh/sshd_config.d/*.conf
+```
+at the top of the `/etc/ssh/sshd_config` file. Alternatively, you may move your custom configurations to a separate file within `/etc/ssh/sshd_config.d/` and revert changes in the main configuration file.
 
 ---
-`1 - WHAT IS EFFECTIVE LEADERSHIP`
 
-As a leader, I believe that being effective involves having a clear vision that all team members are aligned to. The vision serves as the foundation, upon which trust, accountability, and psychological safety are built. I always strive to be adaptable, listen actively, and align all decisions to the our core mission and values.
+## Q1: What actions can we take before proceeding to the 4.13 upgrade?
 
----
-`2 - ENGAGING WITH STAKEHOLDERS`
+### **Pre-Upgrade Actions**
 
-Open and clear communication with stakeholders is critical for GAIN's success. I'm aware that Co-Chairs already meet regularly with HR and organisational leaders, and I would focus these discussions GAIN's strategy, risk mitigation, and ambassador/member engagement. To maximise productivity, I would prepare concise agendas and actionable items to ensure that the meetings were outcome-focused and aligned with GAIN's goals.
+1. **Audit Your Current SSH Configuration:**
+   - **Review Customizations:**  
+     Check whether `/etc/ssh/sshd_config` has been modified from its default state. Look for any custom directives that might conflict with the new requirements.
+   - **Verify Inclusion:**  
+     Confirm if the configuration already contains the line:
+     ```bash
+     Include /etc/ssh/sshd_config.d/*.conf
+     ```
+     If not, plan to add it.
 
----
-`3 - BEING A PEOPLE-LEADER`
+2. **Prepare the Necessary Directory and File:**
+   - **Create the Directory:**  
+     On each node (or via a MachineConfig resource), create the directory that OpenShift now expects:
+     ```bash
+     mkdir -p /etc/ssh/sshd_config.d
+     ```
+   - **Create an Empty Include File:**  
+     Place an empty file in the directory to ensure that the inclusion directive does not result in errors:
+     ```bash
+     touch /etc/ssh/sshd_config.d/empty_include.conf
+     ```
+   - **MachineConfig Approach:**  
+     If you are using MachineConfigs for configuration management, create a MachineConfig resource that performs these steps on all nodes before the upgrade. This ensures that even nodes where `/etc/ssh/sshd_config` has been customized will include the proper directory and file.
 
-Beyond frequent 121s with GAIN leads, I would work closely with all ambassadors where possible to enhance team collaboration, and reduce any sense of hierarchical boundaries. Delegating responsibilities - such as forming a dedicated Treasury Team - would empower ambassadors to take ownership, and avoid micro-management. With inspiration from Jason (co-lead for Comms & Governance), I would also seek development opportunities for all ambassadors to align with their career aspirations.
+3. **Document and Communicate the Changes:**
+   - **Internal Communication:**  
+     Inform your operations and cluster management teams about the planned configuration changes.
+   - **Backup:**  
+     Backup the current `/etc/ssh/sshd_config` file (and any related SSH configuration files) so you can restore them if needed.
 
----
-`4 - IMPROVING ENGAGEMENT AND SUPPORTING AMBASSADORS`
-
-The Ambassador Feedback Survey provided valuable insights, so I would implement this quarterly to refine our engagement strategy. I would also ensure the continued success of the monthly Ambassador Newsletters to recognise the efforts of ambassadors and share updates.
-
-I would additionally introduce a GAIN Roadmap to outline strategic deliverables and key Barclays events (eg. interns/new-joiners, cultural celebrations). Having a visual tool available to all ambassadors would help them to align their work with priorities and prepare for any major events.
-
----
-`5 - MAINTAINING RISK AND CONTROLS`
-
-Given that GAIN is a HR-owned product, all decisions and risks would be escalated upwards for HR to review. My first step as Co-Chair would be to work with Ellie to formalise GAIN policies into a central resource and familiarise myself with them. Then before making any decision, I would always ask: does this decision align with our standards, risks and controls? I believe it would be necessary to have a system like this to maintain consistency and guarantee the safety of all ambassadors.
-
----
-`6 - MANAGING THE GAIN BUDGET`
-
-Budgeting would reflect the roadmap's priorities, allocating funds to projects like cultural events or the arrival of new-joiners, with allowance for unforeseen expenses too. Having transparent updates to stakeholders would ensure that they are aligned and informed about GAIN's plans and activity.
-
----
-`7 - CONTINUOUS IMPROVEMENT AND CONSISTENTLY EXCELLENT`
-
-I would implement a weekly review process, asking: What went well? What didn't go so well? What did we learn? I would also seek feedback from leads on GAIN's processes and leadership to identify opportunities for growth/development.
-
----
-`8 - STRATEGY AND PURPOSE`
-
-As co-chair I would collaborate with Ellie to draft a purpose-driven strategy, which could then be refined with input from GAIN leads, before presenting to HR. To improve our decision-making and ensure alignment, we could regularly ask, "How does this decision benefit our strategy and values in GAIN?" (eg. in a weekly co-chair review meeting).
+4. **Review Compliance and RSA Key Notes:**
+   - If you are also applying compliance remediations, verify that the appropriate MachineConfig changes have been implemented.
+   - Double-check that the issue is not related to RSA keys (see relevant Red Hat documentation if needed).
 
 ---
-## What action to develop the GAIN strategy and propel the network forward?
 
-**Structure of answer:**
-1. Enriching and useful events for early-careers
-2. Improving the experience of all members and ambassadors
-3. Highlighting GAIN's presence and position at Barclays
-4. Simplifying GAIN's processes and improving efficiency
-5. Developing the strategy beyond 2024-25
+## Q2: What happens if the proposed fix doesn’t work – what is the action/solution then? Do we have a backup plan?
 
----
-`0 - INTRODUCTION`
+### **Backup and Rollback Strategy**
 
-The GAIN 2024-25 Strategy involves four key components: purposeful output, people, brand/engagement, and simple/straightforward.
+1. **Backup the Existing SSH Configuration:**
+   - **Pre-Upgrade Backup:**  
+     Before applying any changes, backup the `/etc/ssh/sshd_config` file and any files in `/etc/ssh/sshd_config.d/` (if present). This can be done manually or as part of your configuration management backup process.
 
----
-`1 - ENRICHING AND USEFUL EVENTS`
-> Example Q: What kind of events and content would early-careers find enriching and useful?
+2. **Rollback Plan if the Fix Fails:**
+   - **Revert to the Backups:**  
+     If after the upgrade and applying the fix, SSH access fails (e.g., “Permission denied” errors), revert to the previously backed-up configuration files.
+   - **Use Node-Level Debugging:**  
+     Access the nodes via alternative methods (for example, using the node’s console or using `oc debug node/<node_name>`) to investigate and manually roll back changes if necessary.
+   - **Alternative Access Methods:**  
+     If SSH login continues to fail, ensure you have an alternative access method (such as the web console or out-of-band management) to fix the configuration on the affected node.
 
-To deliver purposeful output, events that bring people together to share insights, ask questions, and connect with one another are particularly impactful for early-careers. While GAIN already offers practical and tailored events/content, regular and periodic networking sessions per location would strengthen connections and create more opportunities for knowledge-sharing.
+3. **Communication with Red Hat Support:**
+   - **Engage Support:**  
+     If the issue persists and rollback is not sufficient, escalate the issue by opening a support case with Red Hat. Provide details of your modifications, backups, and error logs.
 
-To highlight GAIN's focus on career development, we could leverage the Viva Engage platform and our quarterly member newsletters to share insights from ambassadors, among other communications. This could include topics such as leadership, balancing technical/soft skills, or certifications that would highlight ambassadors' benefit from the role, and add value for members.
-
----
-`2 - IMPROVING THE EXPERIENCE OF ALL MEMBERS/AMBASSADORS`
-> Example Q: How can we improve the experience of all members and ambassadors?
-
-For our people-focused strategy, I would introduce a mentorship programme to pair alumni (those who have rolled-off the programme) and current graduates/apprentices to further support GAIN members. This would act as a GAIN product with a structured sign-up process, where we would actively recruit alumni mentors.
-
-For ambassadors, a sense of community is essential. Creating a social committee to organise both in-person and virtual networking/socials for ambassadors would encourage collaboration. As the number of ambassadors continues to grow, engagement and retention are priorities.
+4. **Contingency MachineConfig:**
+   - If the configuration fix through the MachineConfig resource does not yield the desired behavior, consider creating a second MachineConfig that reverts the changes and restores the previous behavior while you troubleshoot further.
 
 ---
-`3 - HIGHLIGHTING PRESENCE AND POSITION/BRANDING`
-> Example Q: How will we improve GAIN's overall presence and position at Barclays?
 
-Later this year, we will fully integrate the new branding into all communications, early-careers monthly calls, and ambassador resources. Viva Engage can provide weekly or monthly updates, rather than relying solely on quarterly newsletters, to ensure that we can provide engaging content to members consistently. We will also host networking and GAIN awareness events at sites with the newly appointed site-representatives to build more engagement in these under-represented areas.
+## Q3: How can we test this fix to ensure that it works?
+
+### **Testing Methodology**
+
+1. **Pre-Upgrade Testing in a Staging Environment:**
+   - **Clone a Test Cluster:**  
+     Use a staging or development cluster that mirrors your production environment.
+   - **Apply the MachineConfig or Manual Changes:**  
+     Implement the changes (directory creation, empty file creation, and the Include line in `/etc/ssh/sshd_config`) on this staging cluster.
+   - **Verify SSH Configuration:**
+     - Run:
+       ```bash
+       grep Include /etc/ssh/sshd_config
+       ```
+       on each node (using `oc debug node/<node_name>`) to confirm that the directive is present.
+     - Ensure that the `/etc/ssh/sshd_config.d` directory exists and contains at least one file (even if empty).
+
+2. **Validate SSH Login:**
+   - **Test SSH Access:**  
+     From an external system, attempt to SSH into the node using your standard SSH key:
+     ```bash
+     ssh -i <path-to-key> core@<node-ip>
+     ```
+   - **Confirm Key Loading:**  
+     Verify that SSH logs on the node do not show errors related to the key lookup. Check the node logs for any segmentation faults or errors.
+
+3. **Monitor for Compliance Remediation:**
+   - **Check Compliance Operator:**  
+     If your environment uses the OpenShift Compliance Operator, confirm that the compliance remediations do not override your changes. Test the SSH access after applying both the compliance remediations and your MachineConfig.
+
+4. **Document Results:**
+   - **Record Observations:**  
+     Note down the successful connection attempts, any issues encountered, and how they were resolved.
+   - **Repeat Tests:**  
+     It might be useful to perform these tests on multiple nodes to ensure consistency across your cluster.
 
 ---
-`4 - SIMPLIFYING PROCESSES AND WAYS OF WORKING`
-> Example Q: How can we simplify GAIN's processes and improve our efficiency and ways of working?
 
-For our simple and straightforward strategy, we would streamline GAIN's operations by creating specialised ambassador teams. A dedicated treasury team would reduce the number of approvals for events, and a social committee could maintain regular internal networking. The social committee may also serve as a place for leads or ambassadors to transition into when they're to step down from their role.
+## Conclusion
 
-To improve internal collaboration, we can encourage more knowledge-sharing via the MS Teams Channel which is used sparingly right now. New-joiners especially should feel free to ask questions whenever they are stuck.
+By following the above steps, you can prepare for the OpenShift 4.13 upgrade with a clear plan for updating the SSH configuration. The plan includes pre-upgrade checks, a backup and rollback strategy, and a detailed testing process to ensure that SSH access remains uninterrupted post-upgrade.
+
+Should any issues arise during or after the upgrade, you have a documented rollback process, alternative access methods, and a clear communication plan for engaging with Red Hat support if necessary.
+
+--- 
+
+**Appendix:**  
+For reference, please see the official Red Hat documentation article “SSH Login Not Working After RHOCP 4.13 Upgrade” for additional troubleshooting steps and context.
 
 ---
-`5 - DEVELOPING THE STRATEGY BEYOND 2024-25`
-> Example Q: What actions can we take beyond the 2024-25 strategy and how might this evolve?
 
-Beyond this year's purpose-driven strategy, scalable systems are required for long-term growth. Having dedicated internal teams would in turn allow us to provide more tailored development opportunities for ambassadors that align with their career goals via our onboarding process. Collaborating further with other ERGs, senior stakeholders, and business areas would align GAIN with Barclays' functions. We can adopt the proven frameworks and strategies already embedded in the bank - such as organisational structures or engagement tactics - to ensure scalability and operational efficiency of the GAIN ecosystem.
+This draft should serve as a clear guide to your team and stakeholders, outlining the necessary steps, backup strategies, and validation methods for a smooth upgrade to OpenShift 4.13.
