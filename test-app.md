@@ -1,6 +1,6 @@
 Below is a draft document that explains the fix and answers your three questions. You can adjust the wording as needed for your internal documentation.
 
----
+--- 
 
 # Document: Preparing for the OpenShift 4.13 Upgrade – SSH Configuration Fix
 
