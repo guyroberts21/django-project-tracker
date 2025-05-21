@@ -110,3 +110,44 @@ commit_machineconfig:
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
 ```
+
+
+```yaml
+apiVersion: machineconfiguration.openshift.io/v1
+kind: MachineConfig
+metadata:
+  labels:
+    machineconfiguration.openshift.io/role: master
+  name: set-core-password-from-etcdsecret
+spec:
+  config:
+    ignition:
+      version: 3.2.0
+    systemd:
+      units:
+      - name: set-core-password.service
+        enabled: true
+        contents: |
+          [Unit]
+          Description=Fetch hashed core password from etcdsecret and apply
+          After=network-online.target kubelet.service
+          Wants=network-online.target
+
+          [Service]
+          Type=oneshot
+          RemainAfterExit=yes
+          Environment="KUBECONFIG=/etc/kubernetes/kubeconfig"
+          ExecStart=/bin/bash -eux -c '\
+            # pull the base64-encoded hash out of the Secret \
+            HASH_B64=$(oc get secret etcdsecret \
+                        -n openshift-config \
+                        -o jsonpath="{.data.password}"); \
+            # decode to get the actual hashed password string \
+            HASH=$(echo "${HASH_B64}" | base64 -d); \
+            # apply it to core, treating HASH as an already-hashed password \
+            echo "core:${HASH}" | chpasswd -e \
+          '
+
+          [Install]
+          WantedBy=multi-user.target
+```
