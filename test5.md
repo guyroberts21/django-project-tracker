@@ -15,3 +15,16 @@
 4. Writing + creativity (eg. Piano)
 5. Reading / Researching
 6. 
+
+```bash
+NS=metrics-debug
+LABEL=app=metrics-daemonset
+OUTDIR=metrics-bundle
+mkdir -p "$OUTDIR"
+for p in $(oc -n "$NS" get pods -l "$LABEL" -o jsonpath='{.items[*].metadata.name}'); do
+  echo "Copying $p:/metrics.tar.gz ..."
+  oc -n "$NS" cp "$p:/metrics.tar.gz" "$OUTDIR/${p}.tar.gz" || echo "WARN: copy failed for $p"
+done
+tar -czf metrics-all-nodes.tar.gz "$OUTDIR"
+echo "Created metrics-all-nodes.tar.gz"
+```
